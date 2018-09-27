@@ -1,0 +1,11 @@
+---
+title: "p8105_hw2_hx2263"
+author: "Tiffany Xi"
+date: 2018-09-27
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
