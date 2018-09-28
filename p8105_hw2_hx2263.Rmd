@@ -7,5 +7,79 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
 ```
+
+##Problem 1
+
+**Import and clean NYC transit csv files**
+
+```{r}
+nyc_transit = 
+  read_csv(file = "./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
+  janitor::clean_names() %>% 
+  select(line, station_name, station_latitude, station_longitude, starts_with("route"), entry,          vending, entrance_type, ada) %>% 
+  mutate(entry = recode(entry, "YES" = TRUE, "NO" = FALSE))
+nyc_transit
+```
+
+*Description:*
+
+This nyc_transit dataset contains variables named `r colnames(nyc_transit)`. 
+
+My data cleaning steps are: first clean the column names into snake case with function janitor::clean_names; then use 'select' function to select the variables I am interested in. Subsequently, use recode to convert the character variable 'YES' and 'NO' in 'entry' column into logical variable 'TRUE' and 'FALSE'.
+
+The dimension of the resulting dataset is `r nrow(nyc_transit)`*`r ncol(nyc_transit)`.
+
+*Answers:*
+
+1.There are `r nrow(distinct(nyc_transit, line, station_name))` distinct stations.
+
+**filter out the ADA complicant distinct stations**
+
+```{r}
+ada_nyc_transit = 
+  nyc_transit %>% 
+  distinct(line, station_name, .keep_all = TRUE) %>% 
+  filter(ada == "TRUE")
+```
+2.The number of stations which are ADA compliant is `r nrow(ada_nyc_transit)`.
+ 
+```{r}
+vend_nyc_transit =
+  nyc_transit %>%
+  filter(vending == 'NO')
+nrow(vend_nyc_transit)/nrow(nyc_transit)
+```
+
+Reformat the data
+
+1.route number and route name are distinct variables
+```{r}
+nyc_transit_tidy = 
+  nyc_transit%>% 
+  gather(key = "route_number", value = "route_name", route1:route11)
+```
+
+2.find out the distinct stations serve the A train
+```{r}
+nyc_transit_tidy_a = 
+  nyc_transit_tidy %>% 
+  distinct(line, station_name, .keep_all = TRUE) %>% 
+  filter(route_name == "A")
+```
+
+`r nrow(nyc_transit_tidy_a)` distinct stations serve the A train.
+
+```{r}
+nyc_transit_tidy_a_ada = 
+  nyc_transit_tidy_a %>% 
+  filter(ada == "TRUE")
+```
+
+Of the stations that serve the A train, `r nrow(nyc_transit_tidy_a_ada)` of them are ADA compliant.
+
+
+
 
