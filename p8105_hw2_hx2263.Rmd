@@ -81,5 +81,73 @@ nyc_transit_tidy_a_ada =
 Of the stations that serve the A train, `r nrow(nyc_transit_tidy_a_ada)` of them are ADA compliant.
 
 
+##Problem 2
+
+1.Read and clean the Mr. Trash Wheel sheet.
+
+```{r}
+trash_wheel = 
+  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", 
+                     sheet = "Mr. Trash Wheel", 
+                     range = "A2:N258") %>%
+  janitor::clean_names() %>% 
+  filter(!is.na(dumpster)) %>% 
+  mutate(sports_balls = round(sports_balls, digits = 0)) %>% 
+  mutate(sports_balls = as.integer(sports_balls))
+trash_wheel
+```
+
+2.Read and clean precipitation data for 2016 and 2017
+
+```{r}
+prcp_2016 = 
+  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx",
+                     sheet = "2016 Precipitation", 
+                     range = "A2:B15") %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(month)) %>% 
+  filter(!is.na(total)) %>% 
+  mutate(year = 2016) 
+
+prcp_2016
+
+prcp_2017 = 
+  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx",
+                     sheet = "2017 Precipitation", 
+                     range = "A2:B15") %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(month)) %>% 
+  filter(!is.na(total)) %>% 
+  mutate(year = 2017) 
+
+prcp_2017
+```
+
+3.Combine datasets and convert month to a character variable
+
+```{r}
+prcp_2016 = mutate(prcp_2016, month = month.name)
+prcp_2017 = mutate(prcp_2017, month = month.name[0:nrow(prcp_2017)])
+combo_16_17 = full_join(prcp_2016, prcp_2017)
+combo_16_17
+```
+
+```{r}
+combo_16_17_trash = full_join(combo_16_17, trash_wheel, by = c("month", "year"))
+combo_16_17_trash
+```
+
+the number of observations in both resulting datasets are `r nrow(trash_wheel)` and `r nrow(combo_16_17)`, and give examples of key variables. 
+
+For available data, the total precipitation in 2017 was `r sum(prcp_2017$total[prcp_2017$year == "2017"])`.
+
+```{r include = FALSE}
+trash_wheel_2016 = filter(trash_wheel, trash_wheel$year == 2016)
+```
+
+The median number of sports balls in a dumpster in 2016 was `r median(trash_wheel_2016$dumpster)`.
+
+
+
 
 
