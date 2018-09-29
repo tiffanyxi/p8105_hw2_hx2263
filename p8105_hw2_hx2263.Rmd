@@ -32,7 +32,7 @@ My data cleaning steps are: first clean the column names into snake case with fu
 
 The dimension of the resulting dataset is `r nrow(nyc_transit)`*`r ncol(nyc_transit)`.
 
-*Answers:*
+* Answers:
 
 1.There are `r nrow(distinct(nyc_transit, line, station_name))` distinct stations.
 
@@ -44,6 +44,7 @@ ada_nyc_transit =
   distinct(line, station_name, .keep_all = TRUE) %>% 
   filter(ada == "TRUE")
 ```
+
 2.The number of stations which are ADA compliant is `r nrow(ada_nyc_transit)`.
  
 ```{r}
@@ -70,7 +71,7 @@ nyc_transit_tidy_a =
   filter(route_name == "A")
 ```
 
-`r nrow(nyc_transit_tidy_a)` distinct stations serve the A train.
+* `r nrow(nyc_transit_tidy_a)` distinct stations serve the A train.
 
 ```{r}
 nyc_transit_tidy_a_ada = 
@@ -78,7 +79,7 @@ nyc_transit_tidy_a_ada =
   filter(ada == "TRUE")
 ```
 
-Of the stations that serve the A train, `r nrow(nyc_transit_tidy_a_ada)` of them are ADA compliant.
+* Of the stations that serve the A train, `r nrow(nyc_transit_tidy_a_ada)` of them are ADA compliant.
 
 
 ##Problem 2
@@ -109,8 +110,6 @@ prcp_2016 =
   filter(!is.na(total)) %>% 
   mutate(year = 2016) 
 
-prcp_2016
-
 prcp_2017 = 
   readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx",
                      sheet = "2017 Precipitation", 
@@ -119,8 +118,6 @@ prcp_2017 =
   filter(!is.na(month)) %>% 
   filter(!is.na(total)) %>% 
   mutate(year = 2017) 
-
-prcp_2017
 ```
 
 3.Combine datasets and convert month to a character variable
@@ -137,17 +134,59 @@ combo_16_17_trash = full_join(combo_16_17, trash_wheel, by = c("month", "year"))
 combo_16_17_trash
 ```
 
-the number of observations in both resulting datasets are `r nrow(trash_wheel)` and `r nrow(combo_16_17)`, and give examples of key variables. 
+* The number of observations in both resulting datasets are `r nrow(trash_wheel)` and `r nrow(combo_16_17)`, and give examples of key variables. 
 
-For available data, the total precipitation in 2017 was `r sum(prcp_2017$total[prcp_2017$year == "2017"])`.
+* For available data, the total precipitation in 2017 was `r sum(prcp_2017$total[prcp_2017$year == "2017"])`.
 
 ```{r include = FALSE}
 trash_wheel_2016 = filter(trash_wheel, trash_wheel$year == 2016)
 ```
 
-The median number of sports balls in a dumpster in 2016 was `r median(trash_wheel_2016$dumpster)`.
+* The median number of sports balls in a dumpster in 2016 was `r median(trash_wheel_2016$dumpster)`.
+
+##Problem 3
+
+```{r}
+library(p8105.datasets)
+brfss = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(topic == "Overall Health") %>% 
+  select(-class, -topic, -question, -sample_size, -(confidence_limit_low:geo_location))
+
+brfss_prop = brfss%>%
+  spread(key = response, value = data_value) %>% 
+  janitor::clean_names() %>%
+  mutate(prop = (excellent + very_good )/100)
+brfss_prop$prop[0:20]
+``` 
 
 
+
+```{r}
+brfss_loco = brfss%>%
+  distinct(locationdesc, .keep_all = TRUE)
+
+brfss_state = brfss%>%
+  distinct(locationabbr, .keep_all = TRUE)
+
+which.max(table(brfss$locationabbr))
+```
+* `r nrow(brfss_loco)` unique locations are included in the dataset. The number of states are `r nrow(brfss_state)`, so, yes, every state is represented. NJ(New Jersey) is observed the most.
+
+```{r}
+brfss_2002_excel = brfss %>% 
+  filter(year == 2002 & response == "Excellent") %>% 
+  filter(!is.na(data_value))
+```
+
+* In 2002, the median of the “Excellent” response value is `r median(brfss_2002_excel$data_value)`.
+
+
+* Histogram of “Excellent” response values in the year 2002
+```{r}
+ggplot(brfss_2002_excel, aes(x = data_value)) + 
+  geom_histogram()
+```
 
 
 
