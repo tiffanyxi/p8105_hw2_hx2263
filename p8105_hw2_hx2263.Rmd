@@ -53,15 +53,7 @@ nyc_transit_tidy
 
 *2.* `r nrow(nyc_transit_tidy %>% distinct(line, station_name, .keep_all = TRUE) %>% filter(route_name == "A"))` distinct stations serve the A train.
 
-```{r dist_a_ada}
-nyc_transit_tidy_a_ada = 
-  nyc_transit_tidy %>% 
-  distinct(line, station_name, .keep_all = TRUE) %>% 
-  filter(route_name == "A") %>% 
-  filter(ada == "TRUE")
-```
-
-*3.* Of the stations that serve the A train, `r nrow(nyc_transit_tidy_a_ada)` of them are ADA compliant.
+*3.* Of the stations that serve the A train, `r nrow(nyc_transit_tidy %>% distinct(line, station_name, .keep_all = TRUE) %>% filter(route_name == "A") %>% filter(ada == "TRUE"))` of them are ADA compliant.
 
 
 #Problem 2
@@ -79,7 +71,7 @@ trash_wheel =
   mutate(sports_balls = as.integer(sports_balls))
 trash_wheel
 ```
-
+  
 2.Read and clean precipitation data for 2016 and 2017
 
 ```{r}
@@ -107,18 +99,33 @@ prcp_2017 =
 ```{r}
 prcp_2016 = mutate(prcp_2016, month = month.name)
 prcp_2017 = mutate(prcp_2017, month = month.name[0:nrow(prcp_2017)])
-combo_16_17 = full_join(prcp_2016, prcp_2017)
+combo_16_17 = full_join(prcp_2016, prcp_2017, by = c("month", "total", "year"))
 combo_16_17
 ```
 
+* Description:
 
-#combo_16_17_trash = full_join(combo_16_17, trash_wheel, by = c("month", "year"))
-#combo_16_17_trash
+In the dataset `trash_wheel`, the number of observations is `r nrow(trash_wheel)`, and the number of variables is `r ncol(trash_wheel)`.
+
+* Key variable:
+
+1.The mean of the number of glass bottles in 2014, 2015, 2016 are `r mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2014)])`, `r round(mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2015)]), digits = 2)` and `r round(mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2016)]), digits = 2)`.
+
+2.The median of the number of grocery bags in 2014, 2015, 2016 are `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2014)])`, `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2015)])` and `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2016)])`.
+
+3.The maximum of the number of cigarette butts in the year 2015 is `r max(trash_wheel$cigarette_butts[which(trash_wheel$year == 2015)])`.
 
 
-* The number of observations in both resulting datasets are `r nrow(trash_wheel)` and `r nrow(combo_16_17)`, and give examples of key variables. 
+In the dataset `combo_16_17`, the number of observations is `r nrow(combo_16_17)`, and the number of variables is `r ncol(combo_16_17)`.
 
-*KEY VARIABLES
+* Key variable:
+
+1.The mean of precipitation data in year 2016 is `r round(mean(combo_16_17$total[which(combo_16_17$year == 2016)]), digits = 2)`.
+
+2.The median of precipitation data in year 2017 is `r median(combo_16_17$total[which(combo_16_17$year == 2017)])`.
+
+3.The standard deviation of precipitation data in year 2016 is `r round(sd(combo_16_17$total[which(combo_16_17$year == 2016)]), digits = 2)`.
+
 * For available data, the total precipitation in 2017 was `r sum(prcp_2017$total[prcp_2017$year == "2017"])` inches.
 
 * The median number of sports balls in a dumpster in 2016 was `r median((trash_wheel %>% filter(trash_wheel$year == 2016))$sports_balls)`.
