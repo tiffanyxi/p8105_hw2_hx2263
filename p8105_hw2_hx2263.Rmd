@@ -13,7 +13,7 @@ library(tidyverse)
 
 #Problem 1
 
-**Import and clean NYC transit csv files**
+Import and clean NYC transit csv files
 
 ```{r df_import_clean, message = FALSE}
 nyc_transit = 
@@ -60,7 +60,7 @@ nyc_transit_tidy
 
 1.Read and clean the Mr. Trash Wheel sheet.
 
-```{r}
+```{r trashwheel_import}
 trash_wheel = 
   readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", 
                      sheet = "Mr. Trash Wheel", 
@@ -74,7 +74,7 @@ trash_wheel
   
 2.Read and clean precipitation data for 2016 and 2017
 
-```{r}
+```{r data_16_17}
 prcp_2016 = 
   readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx",
                      sheet = "2016 Precipitation", 
@@ -96,7 +96,7 @@ prcp_2017 =
 
 3.Combine datasets and convert month to a character variable
 
-```{r}
+```{r comb_convert}
 prcp_2016 = mutate(prcp_2016, month = month.name)
 prcp_2017 = mutate(prcp_2017, month = month.name[0:nrow(prcp_2017)])
 combo_16_17 = full_join(prcp_2016, prcp_2017, by = c("month", "total", "year"))
@@ -130,42 +130,81 @@ In the dataset `combo_16_17`, the number of observations is `r nrow(combo_16_17)
 
 * The median number of sports balls in a dumpster in 2016 was `r median((trash_wheel %>% filter(trash_wheel$year == 2016))$sports_balls)`.
 
+
 #Problem 3
 
-```{r}
+Load the data from the p8105.datasets package
+
+```{r data_import}
+devtools::install_github("p8105/p8105.datasets")
 library(p8105.datasets)
+```
+
+Clean the data and reformat according to requirement
+
+```{r brfss_clean}
 brfss = brfss_smart2010 %>% 
   janitor::clean_names() %>% 
   filter(topic == "Overall Health") %>% 
-  select(-class, -topic, -question, -sample_size, -(confidence_limit_low:geo_location))%>%
+  select(-class, -topic, -question, -sample_size, -(confidence_limit_low:geo_location)) %>%
   spread(key = response, value = data_value) %>%
   janitor::clean_names() %>% 
   select("year", "locationabbr", "locationdesc", "excellent", "very_good", "good", "fair", "poor") %>% 
-  mutate(prop = (excellent + very_good))
+  mutate(prop_ex_vg = (excellent + very_good))
+
 ```
 
 
-#which.max(table(brfss$locationabbr))
+* Answers:
+
+What state is observed the most?
+
+```{r most_observed}
+which.max(table(brfss$locationabbr))
+```
 
 * `r nrow(brfss %>% distinct(locationdesc, .keep_all = TRUE))` unique locations are included in the dataset. The number of states are `r nrow(brfss%>%distinct(locationabbr, .keep_all = TRUE))`, so, yes, every state is represented. NJ(New Jersey) is observed the most.
 
 * In 2002, the median of the “Excellent” response value is `r median((brfss %>% filter(year == 2002))$excellent, na.rm = TRUE)`.
                                           
-
 * Histogram of “Excellent” response values in the year 2002
-```{r, warning=FALSE}
+
+```{r, warning = FALSE, message = FALSE}
 brfss %>% 
   filter(year == 2002) %>% 
   ggplot(aes(x = excellent)) + 
-  geom_histogram()
+  geom_histogram() +
+  labs(
+    title = "Histogram of Excellent response values in 2002",
+    x = "Excellent response values",
+    y = "Counts",
+    caption = "Data from the p8105.datasets package"
+  ) +
+  scale_x_continuous(breaks = c(15, 20, 25, 30, 35, 40), 
+                     labels = c("15", "20", "25", "30", "35", "40")) +
+  theme_bw()
 ```
+
+* Scatterplot of the proportion of “Excellent” response values in New York County and Queens County (both in NY State) in each year from 2002 to 2010
 
 ```{r}
   brfss %>% 
   filter(locationabbr == "NY") %>% 
   filter(locationdesc == "NY - New York County" | locationdesc == "NY - Queens County") %>% 
   ggplot(aes(x = year, y = excellent)) + 
-  geom_point(aes(color = locationdesc))
+  geom_point(aes(color = locationdesc)) +
+  labs(
+    title = "Scatterplot of the proportion of Excellent ",
+    x = "Year",
+    y = "The Proportion of Excellent",
+    caption = "Data from the p8105.datasets package"
+  ) +
+  scale_x_continuous(breaks = c(2002, 2003, 2004, 2005, 2006, 
+                                2007, 2008, 2009, 2010), 
+                     labels = c("2002", "2003", "2004", "2005", "2006", 
+                                "2007", "2008", "2009", "2010")) +
+  theme_bw() +
+  theme(legend.position = "bottom")
 ```
 
 
