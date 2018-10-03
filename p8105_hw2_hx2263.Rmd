@@ -11,17 +11,16 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-##Problem 1
+#Problem 1
 
 **Import and clean NYC transit csv files**
 
-```{r}
+```{r df_import_clean, message = FALSE}
 nyc_transit = 
   read_csv(file = "./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
   janitor::clean_names() %>% 
   select(line, station_name, station_latitude, station_longitude, starts_with("route"), entry,          vending, entrance_type, ada) %>% 
   mutate(entry = recode(entry, "YES" = TRUE, "NO" = FALSE))
-nyc_transit
 ```
 
 *Description:*
@@ -30,59 +29,42 @@ This nyc_transit dataset contains variables named `r colnames(nyc_transit)`.
 
 My data cleaning steps are: first clean the column names into snake case with function janitor::clean_names; then use 'select' function to select the variables I am interested in. Subsequently, use recode to convert the character variable 'YES' and 'NO' in 'entry' column into logical variable 'TRUE' and 'FALSE'.
 
-The dimension of the resulting dataset is `r nrow(nyc_transit)`*`r ncol(nyc_transit)`.
+The dimension of the resulting dataset is `r nrow(nyc_transit)` * `r ncol(nyc_transit)`. I think these data are untidy, we need to put all routes into one column.
 
 * Answers:
 
-1.There are `r nrow(distinct(nyc_transit, line, station_name))` distinct stations.
+1. There are `r nrow(distinct(nyc_transit, line, station_name))` distinct stations.
 
-**filter out the ADA complicant distinct stations**
-
-```{r}
-ada_nyc_transit = 
-  nyc_transit %>% 
-  distinct(line, station_name, .keep_all = TRUE) %>% 
-  filter(ada == "TRUE")
-```
-
-2.The number of stations which are ADA compliant is `r nrow(ada_nyc_transit)`.
+2. The number of stations which are ADA compliant is `r nrow(nyc_transit %>% distinct(line, station_name, .keep_all = TRUE) %>% filter(ada == "TRUE"))`.
  
-```{r}
-vend_nyc_transit =
-  nyc_transit %>%
-  filter(vending == 'NO')
-nrow(vend_nyc_transit)/nrow(nyc_transit)
-```
+3. The proportion of station entrances / exits without vending allow entrance is `r nrow(nyc_transit %>% filter(vending == 'NO' & entry == TRUE))/nrow(nyc_transit %>% filter(vending == 'NO'))`.
 
-Reformat the data
+* Reformat data
 
-1.route number and route name are distinct variables
-```{r}
+*1.* route number and route name are distinct variables
+```{r reformat_1}
 nyc_transit_tidy = 
-  nyc_transit%>% 
-  gather(key = "route_number", value = "route_name", route1:route11)
+  nyc_transit %>% 
+  gather(key = "route_number", value = "route_name", route1:route11) %>% 
+  separate(route_number, into = c("route_str", "route_num"), sep = 5) %>% 
+  select(-route_str)
+nyc_transit_tidy
 ```
 
-2.find out the distinct stations serve the A train
-```{r}
-nyc_transit_tidy_a = 
+*2.* `r nrow(nyc_transit_tidy %>% distinct(line, station_name, .keep_all = TRUE) %>% filter(route_name == "A"))` distinct stations serve the A train.
+
+```{r dist_a_ada}
+nyc_transit_tidy_a_ada = 
   nyc_transit_tidy %>% 
   distinct(line, station_name, .keep_all = TRUE) %>% 
-  filter(route_name == "A")
-```
-
-* `r nrow(nyc_transit_tidy_a)` distinct stations serve the A train.
-
-```{r}
-nyc_transit_tidy_a_ada = 
-  nyc_transit_tidy_a %>% 
+  filter(route_name == "A") %>% 
   filter(ada == "TRUE")
 ```
 
-* Of the stations that serve the A train, `r nrow(nyc_transit_tidy_a_ada)` of them are ADA compliant.
+*3.* Of the stations that serve the A train, `r nrow(nyc_transit_tidy_a_ada)` of them are ADA compliant.
 
 
-##Problem 2
+#Problem 2
 
 1.Read and clean the Mr. Trash Wheel sheet.
 
@@ -129,64 +111,54 @@ combo_16_17 = full_join(prcp_2016, prcp_2017)
 combo_16_17
 ```
 
-```{r}
-combo_16_17_trash = full_join(combo_16_17, trash_wheel, by = c("month", "year"))
-combo_16_17_trash
-```
+
+#combo_16_17_trash = full_join(combo_16_17, trash_wheel, by = c("month", "year"))
+#combo_16_17_trash
+
 
 * The number of observations in both resulting datasets are `r nrow(trash_wheel)` and `r nrow(combo_16_17)`, and give examples of key variables. 
 
-* For available data, the total precipitation in 2017 was `r sum(prcp_2017$total[prcp_2017$year == "2017"])`.
+*KEY VARIABLES
+* For available data, the total precipitation in 2017 was `r sum(prcp_2017$total[prcp_2017$year == "2017"])` inches.
 
-```{r include = FALSE}
-trash_wheel_2016 = filter(trash_wheel, trash_wheel$year == 2016)
-```
+* The median number of sports balls in a dumpster in 2016 was `r median((trash_wheel %>% filter(trash_wheel$year == 2016))$sports_balls)`.
 
-* The median number of sports balls in a dumpster in 2016 was `r median(trash_wheel_2016$dumpster)`.
-
-##Problem 3
+#Problem 3
 
 ```{r}
 library(p8105.datasets)
 brfss = brfss_smart2010 %>% 
   janitor::clean_names() %>% 
   filter(topic == "Overall Health") %>% 
-  select(-class, -topic, -question, -sample_size, -(confidence_limit_low:geo_location))
-
-brfss_prop = brfss%>%
-  spread(key = response, value = data_value) %>% 
-  janitor::clean_names() %>%
-  mutate(prop = (excellent + very_good )/100)
-brfss_prop$prop[0:20]
-``` 
-
-
-
-```{r}
-brfss_loco = brfss%>%
-  distinct(locationdesc, .keep_all = TRUE)
-
-brfss_state = brfss%>%
-  distinct(locationabbr, .keep_all = TRUE)
-
-which.max(table(brfss$locationabbr))
-```
-* `r nrow(brfss_loco)` unique locations are included in the dataset. The number of states are `r nrow(brfss_state)`, so, yes, every state is represented. NJ(New Jersey) is observed the most.
-
-```{r}
-brfss_2002_excel = brfss %>% 
-  filter(year == 2002 & response == "Excellent") %>% 
-  filter(!is.na(data_value))
+  select(-class, -topic, -question, -sample_size, -(confidence_limit_low:geo_location))%>%
+  spread(key = response, value = data_value) %>%
+  janitor::clean_names() %>% 
+  select("year", "locationabbr", "locationdesc", "excellent", "very_good", "good", "fair", "poor") %>% 
+  mutate(prop = (excellent + very_good))
 ```
 
-* In 2002, the median of the “Excellent” response value is `r median(brfss_2002_excel$data_value)`.
 
+#which.max(table(brfss$locationabbr))
+
+* `r nrow(brfss %>% distinct(locationdesc, .keep_all = TRUE))` unique locations are included in the dataset. The number of states are `r nrow(brfss%>%distinct(locationabbr, .keep_all = TRUE))`, so, yes, every state is represented. NJ(New Jersey) is observed the most.
+
+* In 2002, the median of the “Excellent” response value is `r median((brfss %>% filter(year == 2002))$excellent, na.rm = TRUE)`.
+                                          
 
 * Histogram of “Excellent” response values in the year 2002
-```{r}
-ggplot(brfss_2002_excel, aes(x = data_value)) + 
+```{r, warning=FALSE}
+brfss %>% 
+  filter(year == 2002) %>% 
+  ggplot(aes(x = excellent)) + 
   geom_histogram()
 ```
 
+```{r}
+  brfss %>% 
+  filter(locationabbr == "NY") %>% 
+  filter(locationdesc == "NY - New York County" | locationdesc == "NY - Queens County") %>% 
+  ggplot(aes(x = year, y = excellent)) + 
+  geom_point(aes(color = locationdesc))
+```
 
 
