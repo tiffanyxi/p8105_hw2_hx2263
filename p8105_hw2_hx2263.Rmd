@@ -19,17 +19,17 @@ Import and clean NYC transit csv files
 nyc_transit = 
   read_csv(file = "./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
   janitor::clean_names() %>% 
-  select(line, station_name, station_latitude, station_longitude, starts_with("route"), entry,          vending, entrance_type, ada) %>% 
+  select(line:entry, vending, ada) %>% 
   mutate(entry = recode(entry, "YES" = TRUE, "NO" = FALSE))
 ```
 
 *Description:*
 
-This nyc_transit dataset contains variables named `r colnames(nyc_transit)`. 
+This nyc_transit dataset contains `r ncol(nyc_transit)` variables, which are named `r colnames(nyc_transit)`. 
 
-My data cleaning steps are: first clean the column names into snake case with function janitor::clean_names; then use 'select' function to select the variables I am interested in. Subsequently, use recode to convert the character variable 'YES' and 'NO' in 'entry' column into logical variable 'TRUE' and 'FALSE'.
+My data cleaning steps are: first import the data and clean the column names into snake case with function janitor::clean_names; then use 'select' function to select the variables I am interested in. Subsequently, use recode to convert the character variable 'YES' and 'NO' in 'entry' column into logical variable 'TRUE' and 'FALSE'.
 
-The dimension of the resulting dataset is `r nrow(nyc_transit)` * `r ncol(nyc_transit)`. I think these data are untidy, we need to put all routes into one column.
+The dimension of the resulting dataset is `r nrow(nyc_transit)` rows * `r ncol(nyc_transit)` columns. I think these data are untidy, we need to put all routes into one column.
 
 * Answers:
 
@@ -69,7 +69,6 @@ trash_wheel =
   filter(!is.na(dumpster)) %>% 
   mutate(sports_balls = round(sports_balls, digits = 0)) %>% 
   mutate(sports_balls = as.integer(sports_balls))
-trash_wheel
 ```
   
 2.Read and clean precipitation data for 2016 and 2017
@@ -97,9 +96,8 @@ prcp_2017 =
 3.Combine datasets and convert month to a character variable
 
 ```{r comb_convert}
-prcp_2016 = mutate(prcp_2016, month = month.name)
-prcp_2017 = mutate(prcp_2017, month = month.name)
-combo_16_17 = full_join(prcp_2016, prcp_2017, by = c("month", "total", "year"))
+combo_16_17 = bind_rows(prcp_2016, prcp_2017) %>% 
+  mutate(month = month.name[month])
 combo_16_17
 ```
 
@@ -107,7 +105,7 @@ combo_16_17
 
 In the dataset `trash_wheel`, the number of observations is `r nrow(trash_wheel)`, and the number of variables is `r ncol(trash_wheel)`.
 
-* Key variable:
+* Key variables are `dumpster`, `glass_bottles`,`grocery_bags` and etc.
 
 1.The mean of the number of glass bottles in 2014, 2015, 2016 are `r mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2014)])`, `r round(mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2015)]), digits = 2)` and `r round(mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2016)]), digits = 2)`.
 
@@ -116,9 +114,9 @@ In the dataset `trash_wheel`, the number of observations is `r nrow(trash_wheel)
 3.The maximum of the number of cigarette butts in the year 2015 is `r max(trash_wheel$cigarette_butts[which(trash_wheel$year == 2015)])`.
 
 
-In the dataset `combo_16_17`, the number of observations is `r nrow(combo_16_17)`, and the number of variables is `r ncol(combo_16_17)`.
+In the precipitation dataset `combo_16_17`, the number of observations is `r nrow(combo_16_17)`, and the number of variables is `r ncol(combo_16_17)`.
 
-* Key variable:
+* Key variables are `month`, `total` and `year`.
 
 1.The mean of precipitation data in year 2016 is `r round(mean(combo_16_17$total[which(combo_16_17$year == 2016)]), digits = 2)`.
 
@@ -140,7 +138,13 @@ devtools::install_github("p8105/p8105.datasets")
 library(p8105.datasets)
 ```
 
-Clean the data and reformat according to requirement
+Clean the data and reformat according to requirement below:
+
+1. Format the data to use appropriate variable names;
+2. Focus on the “Overall Health” topic
+3. Exclude variables for class, topic, question, sample size, and everything from lower confidence limit to GeoLocation
+4. Structure data so that values for Response are column names / variables which indicate the proportion of subjects with each response
+5. Create a new variable showing the proportion of responses that were “Excellent” or “Very Good”
 
 ```{r brfss_clean}
 brfss = brfss_smart2010 %>% 
