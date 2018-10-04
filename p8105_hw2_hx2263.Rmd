@@ -35,7 +35,7 @@ The dimension of the resulting dataset is `r nrow(nyc_transit)` * `r ncol(nyc_tr
 
 1. There are `r nrow(distinct(nyc_transit, line, station_name))` distinct stations.
 
-2. The number of stations which are ADA compliant is `r nrow(nyc_transit %>% distinct(line, station_name, .keep_all = TRUE) %>% filter(ada == "TRUE"))`.
+2. The number of disctinct stations which are ADA compliant is `r nrow(nyc_transit %>% distinct(line, station_name, .keep_all = TRUE) %>% filter(ada == "TRUE"))`. From the original dataset, the number of stations which are ADA compliant is `r nrow(nyc_transit %>% filter(ada == "TRUE"))`.
  
 3. The proportion of station entrances / exits without vending allow entrance is `r nrow(nyc_transit %>% filter(vending == 'NO' & entry == TRUE))/nrow(nyc_transit %>% filter(vending == 'NO'))`.
 
@@ -62,9 +62,9 @@ nyc_transit_tidy
 
 ```{r trashwheel_import}
 trash_wheel = 
-  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", 
+  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", 
                      sheet = "Mr. Trash Wheel", 
-                     range = "A2:N258") %>%
+                     range = "A2:N338") %>%
   janitor::clean_names() %>% 
   filter(!is.na(dumpster)) %>% 
   mutate(sports_balls = round(sports_balls, digits = 0)) %>% 
@@ -76,7 +76,7 @@ trash_wheel
 
 ```{r data_16_17}
 prcp_2016 = 
-  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx",
+  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
                      sheet = "2016 Precipitation", 
                      range = "A2:B15") %>% 
   janitor::clean_names() %>% 
@@ -85,7 +85,7 @@ prcp_2016 =
   mutate(year = 2016) 
 
 prcp_2017 = 
-  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx",
+  readxl::read_excel(path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
                      sheet = "2017 Precipitation", 
                      range = "A2:B15") %>% 
   janitor::clean_names() %>% 
@@ -98,7 +98,7 @@ prcp_2017 =
 
 ```{r comb_convert}
 prcp_2016 = mutate(prcp_2016, month = month.name)
-prcp_2017 = mutate(prcp_2017, month = month.name[0:nrow(prcp_2017)])
+prcp_2017 = mutate(prcp_2017, month = month.name)
 combo_16_17 = full_join(prcp_2016, prcp_2017, by = c("month", "total", "year"))
 combo_16_17
 ```
@@ -111,7 +111,7 @@ In the dataset `trash_wheel`, the number of observations is `r nrow(trash_wheel)
 
 1.The mean of the number of glass bottles in 2014, 2015, 2016 are `r mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2014)])`, `r round(mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2015)]), digits = 2)` and `r round(mean(trash_wheel$glass_bottles[which(trash_wheel$year == 2016)]), digits = 2)`.
 
-2.The median of the number of grocery bags in 2014, 2015, 2016 are `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2014)])`, `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2015)])` and `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2016)])`.
+2.The median of the number of grocery bags in 2015, 2016, 2017 are `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2015)])`, `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2016)])` and `r median(trash_wheel$grocery_bags[which(trash_wheel$year == 2017)])`.
 
 3.The maximum of the number of cigarette butts in the year 2015 is `r max(trash_wheel$cigarette_butts[which(trash_wheel$year == 2015)])`.
 
@@ -135,7 +135,7 @@ In the dataset `combo_16_17`, the number of observations is `r nrow(combo_16_17)
 
 Load the data from the p8105.datasets package
 
-```{r data_import}
+```{r data_import, message = FALSE}
 devtools::install_github("p8105/p8105.datasets")
 library(p8105.datasets)
 ```
